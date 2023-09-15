@@ -1,8 +1,0 @@
-{
-    "ROBOFLOW_API_KEY": "0luIXfVr4TvXOnHEZrhm",
-    "ROBOFLOW_MODEL": "car_detect-ao4mr",
-    "ROBOFLOW_SIZE": 416,
-
-    "FRAMERATE": 24,
-    "BUFFER": 0.5
-}
