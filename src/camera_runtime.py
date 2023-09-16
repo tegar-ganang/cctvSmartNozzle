@@ -3,16 +3,14 @@ import numpy as np
 import requests
 from roboflow import Roboflow
 import time
-from transformers import VisionEncoderDecoderModel
+from transformers import VisionEncoderDecoderModel, TrOCRProcessor
 from PIL import Image
 import torch
 from torchvision import transforms
 
-model = VisionEncoderDecoderModel.from_pretrained("C:\\Users\\OSVALDO KURNIAWAN\\Documents\\PKMSmartNozzle\\SmartNozzle\\CCTV-integrated model 1\\src\\model_base_modify_augmented4k", local_files_only=True)
-
 class CameraOBJ:
     def __init__(self):
-        # self.machine_capture = cv2.VideoCapture('rtsp://admin:HIEEJC@169.254.94.233:554')
+        # self.machine_capture = cv2.VideoCapture('rtsp://admin:HIEEJC123@169.254.94.233:554')
         self.machine_capture = cv2.VideoCapture(0)
         self.detect_status  = 0
         self.original_image = np.zeros((1080, 1920, 3), dtype=np.uint8)
@@ -22,9 +20,14 @@ class CameraOBJ:
         self.license_plate = f"K {np.random.randint(1000, 5555)} ASF"
         self.detect_toggle_timer = time.time()
         self.detect_toggle_interval = 10  # interval
+        # Load model 1
         self.rf = Roboflow(api_key="0luIXfVr4TvXOnHEZrhm")
         self.project = self.rf.workspace().project("car_detect-ao4mr")
         self.model = self.project.version(1).model
+        # Load model 2
+        # Load the TrOCR model
+        self.processor = TrOCRProcessor.from_pretrained("microsoft/trocr-base-stage1")
+        self.model2 = VisionEncoderDecoderModel.from_pretrained("C:\\Users\\OSVALDO KURNIAWAN\\Documents\\PKMSmartNozzle\\SmartNozzle\\CCTV-integrated model 1\\src\\model_base_modify_augmented4k", local_files_only=True)
 
     def switch_detect_status(self):
         self.detect_status = not self.detect_status
@@ -83,16 +86,14 @@ class CameraOBJ:
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ])
-
+     
         # Preprocess the image and convert it to a tensor
         input_image = preprocess(image_pil).unsqueeze(0)  # Add a batch dimension
 
         # Process the image using the model to generate a caption
-        generated_ids = model.generate(input_image)
-        generated_text = model.processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
+        generated_ids = self.model2.generate(input_image)
+        generated_text = self.model2.processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
 
-        container_detect_car_license = np.zeros((1080, 1920, 3), dtype=np.uint8)
-        
         # Update the class attributes
         self.license_plate = generated_text
-        self.output_frame = cv2.resize(container_detect_car_license, (480, 270))
+        self.output_frame = cv2.resize(frame, (480, 270))  # Update the output frame with the original frame
